@@ -1,8 +1,9 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages (manual)
 
+# Off by default: GitHub Actions needs a working billing setup. Until then, `npm run publish-site` builds locally
+# and pushes the result to the gh-pages branch. To use this instead, add a push trigger and switch
+# Settings > Pages > Source to GitHub Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

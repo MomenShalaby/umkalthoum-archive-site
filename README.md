@@ -46,9 +46,10 @@ Every link goes through `src/lib/url.js`, so the site works at a domain root or 
 
 **GitHub Pages** (live at https://momenshalaby.github.io/umkalthoum-archive-site/). This folder is also its own public
 repo, `MomenShalaby/umkalthoum-archive-site`; the Laravel app and scraper data stay in the private repo (Pages on a
-private repo needs a paid plan). `.github/workflows/deploy.yml` builds with `SITE_BASE=/<repo>/`, checks links and
-publishes on every push to `main`. From the private repo, `npm run publish-site` copies this folder into the site
-repo and pushes it, which triggers that workflow.
+private repo needs a paid plan). `npm run publish-site` builds with `SITE_BASE=/<repo>/`, checks links, pushes this
+project to `main` and the built pages to the `gh-pages` branch, which Pages serves (Settings > Pages > Deploy from a
+branch > `gh-pages` / root). No GitHub Actions needed: `.github/workflows/deploy.yml` is a manual alternative for when
+the account's Actions billing works.
 
 **Cloudflare Pages / Netlify**: root directory `static`, build command `npm run build`, output `dist`.
 
