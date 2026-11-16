@@ -1,0 +1,62 @@
+---
+import { url } from '../lib/url.js';
+import Base from '../layouts/Base.astro';
+import Portrait from './Portrait.astro';
+import { peopleFor, pairs } from '../lib/archive.js';
+import { songs as songsLabel, recordings as recordingsLabel } from '../lib/arabic.js';
+
+// The composers or lyricists index; `role` is 'composer' or 'lyricist'.
+const { role, heading, lede } = Astro.props;
+const list = peopleFor(role);
+const duos = pairs();
+---
+<Base title={heading} nav={role === 'composer' ? 'composers' : 'lyricists'}>
+    <section class="hero">
+        <h1>{heading}</h1>
+        <p class="lede">{lede}</p>
+    </section>
+
+    <ul class="people">
+        {list.map(({ person: p, songs, recordings }) => (
+            <li>
+                {p.slug ? (
+                    <a class="person-card" href={url(`/people/${p.slug}/`)}>
+                        <Portrait person={p} />
+                        <span class="person-text">
+                            <span class="person-name">{p.name}</span>
+                            {p.life && <span class="person-life" dir="ltr">{p.life}</span>}
+                            <span class="person-count">{songsLabel(songs)}، {recordingsLabel(recordings)}</span>
+                        </span>
+                    </a>
+                ) : (
+                    <div class="person-card">
+                        <Portrait person={p} />
+                        <span class="person-text">
+                            <span class="person-name">{p.name}</span>
+                            <span class="person-count">{songsLabel(songs)}، {recordingsLabel(recordings)}</span>
+                        </span>
+                    </div>
+                )}
+            </li>
+        ))}
+    </ul>
+
+    {duos.length > 0 && (
+        <>
+            <h2 class="section">ثنائيات</h2>
+            <p class="meta-line" style="margin-top:0">شاعر وملحّن اجتمعا على أكثر من أغنية. اختر ثنائيًّا لترى أغانيهما.</p>
+            <ol class="pairs">
+                {duos.map((pair) => (
+                    <li>
+                        <a href={url(`/?lyricist=${pair.lyricist.slug}&composer=${pair.composer.slug}`)}>
+                            <span>{pair.lyricist.name}</span>
+                            <span class="pair-x" aria-label="و">×</span>
+                            <span>{pair.composer.name}</span>
+                        </a>
+                        <span class="meta-line">{songsLabel(pair.songs)}</span>
+                    </li>
+                ))}
+            </ol>
+        </>
+    )}
+</Base>

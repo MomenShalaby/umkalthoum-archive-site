@@ -1,0 +1,81 @@
+---
+import { url } from '../../lib/url.js';
+import Base from '../../layouts/Base.astro';
+import SongRow from '../../components/SongRow.astro';
+import RecordingRow from '../../components/RecordingRow.astro';
+import Portrait from '../../components/Portrait.astro';
+import { people, profile, span } from '../../lib/archive.js';
+import { songs as songsLabel, recordings as recordingsLabel } from '../../lib/arabic.js';
+
+export function getStaticPaths() {
+  return people
+    .filter((p) => p.slug)
+    .map((person) => ({ params: { slug: person.slug }, props: { person, ...profile(person) } }))
+    .filter((p) => p.props.songs.length);
+}
+
+const { person, songs, recordings, queue, active, partners } = Astro.props;
+---
+<Base title={person.name} nav={person.composer ? 'composers' : 'lyricists'}>
+    <section data-queue>
+        <div class="page-head">
+            <div>
+                <p class="kind">{person.roleLabel}</p>
+                <h1>{person.name}</h1>
+                {(person.nameEn || person.life) && (
+                    <p class="person-sub">
+                        {person.nameEn && <span dir="ltr">{person.nameEn}</span>}
+                        {person.life && <span dir="ltr">{person.life}</span>}
+                    </p>
+                )}
+            </div>
+            <figure class="portrait-figure">
+                <Portrait person={person} size="lg" />
+                {person.photo && person.photoCredit && (
+                    <figcaption class="credit">
+                        {person.photoSource
+                            ? <a href={person.photoSource} rel="noopener" target="_blank">{person.photoCredit}</a>
+                            : person.photoCredit}
+                    </figcaption>
+                )}
+            </figure>
+        </div>
+
+        {person.bio && <p class="bio">{person.bio}</p>}
+
+        <div class="actions">
+            <button class="btn" type="button" data-play-all><svg aria-hidden="true"><use href="#i-play"/></svg>تشغيل الكل</button>
+            <span class="meta-line">
+                {songsLabel(songs.length)}، {recordingsLabel(recordings.length)}{active && (
+                    <>، سُجّلت بين <span dir="ltr">{active[0] === active[1] ? active[0] : `${active[0]}–${active[1]}`}</span></>
+                )}
+            </span>
+        </div>
+
+        <!-- "Play all" queues the first recording of each song, in list order. -->
+        <ul class="recs" hidden>
+            {queue.map((r) => <RecordingRow recording={r} showSong />)}
+        </ul>
+
+        <h2 class="section">الأغاني</h2>
+        <ol class="songs">
+            {songs.map((song) => <SongRow song={song} span={span} except={person.id} />)}
+        </ol>
+
+        {partners.length > 0 && (
+            <>
+                <h2 class="section">عمل مع</h2>
+                <ul class="partners">
+                    {partners.map(({ person: o, songs: n }) => (
+                        <li>
+                            {o.slug
+                                ? <a href={url(`/people/${o.slug}/`)}><Portrait person={o} size="sm" /><span>{o.name}</span></a>
+                                : <span class="partner-plain"><Portrait person={o} size="sm" /><span>{o.name}</span></span>}
+                            <span class="meta-line">{songsLabel(n)}</span>
+                        </li>
+                    ))}
+                </ul>
+            </>
+        )}
+    </section>
+</Base>

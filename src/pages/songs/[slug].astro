@@ -1,0 +1,72 @@
+---
+import Base from '../../layouts/Base.astro';
+import SongRow from '../../components/SongRow.astro';
+import RecordingRow from '../../components/RecordingRow.astro';
+import PersonLink from '../../components/PersonLink.astro';
+import { songs, songsByCount } from '../../lib/archive.js';
+import { recordings as recordingsLabel, stanzas } from '../../lib/arabic.js';
+
+export function getStaticPaths() {
+  return songs.map((song) => ({ params: { slug: song.slug }, props: { song } }));
+}
+
+const { song } = Astro.props;
+const recs = song.recordings;
+const cover = recs.find((r) => r.coverUrl);
+const total = recs.reduce((n, r) => n + (r.duration || 0), 0);
+// Other songs by the same lyricist and composer.
+const samePair = song.lyricist && song.composer
+  ? songsByCount.filter((s) => s.id !== song.id && s.lyricistId === song.lyricistId && s.composerId === song.composerId)
+  : [];
+---
+<Base title={song.title} nav="songs">
+    <section data-queue>
+        <div class="page-head">
+            <div>
+                <p class="kind">أغنية</p>
+                <h1>{song.title}</h1>
+                {(song.lyricist || song.composer) && (
+                    <div class="credits">
+                        {song.lyricist && <span><b>كلمات</b> <PersonLink person={song.lyricist} /></span>}
+                        {song.composer && <span><b>ألحان</b> <PersonLink person={song.composer} /></span>}
+                    </div>
+                )}
+            </div>
+            {cover && <img class="cover" src={cover.coverUrl} alt="" width="152" height="152">}
+        </div>
+
+        <div class="actions">
+            <button class="btn" type="button" data-play-all><svg aria-hidden="true"><use href="#i-play"/></svg>تشغيل الكل</button>
+            <span class="meta-line">
+                {recordingsLabel(recs.length)}{total ? `، نحو ${Math.round((total / 3600) * 10) / 10} ساعة` : ''}
+            </span>
+            {song.lyrics && <a class="meta-line" href="#lyrics">الكلمات</a>}
+        </div>
+
+        <ul class="recs">
+            {recs.map((r) => <RecordingRow recording={r} />)}
+        </ul>
+    </section>
+
+    {song.lyrics && (
+        <section class="lyrics" id="lyrics" aria-labelledby="lyrics-h">
+            <h2 class="section" id="lyrics-h">الكلمات</h2>
+            {stanzas(song.lyrics).map((stanza) => (
+                <div class="stanza">
+                    {stanza.map((verse) => verse.length === 2
+                        ? <p class="verse is-split"><span>{verse[0]}</span><span>{verse[1]}</span></p>
+                        : <p class="verse">{verse[0]}</p>)}
+                </div>
+            ))}
+        </section>
+    )}
+
+    {samePair.length > 0 && (
+        <>
+            <h2 class="section">من {song.lyricist.name} و{song.composer.name} أيضًا</h2>
+            <ol class="songs">
+                {samePair.map((other) => <SongRow song={other} />)}
+            </ol>
+        </>
+    )}
+</Base>

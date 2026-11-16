@@ -1,0 +1,13 @@
+---
+import RecordingList from '../../components/RecordingList.astro';
+import { venues, recordings } from '../../lib/archive.js';
+
+export function getStaticPaths() {
+  return venues
+    .map((v) => ({ params: { slug: v.slug }, props: { venue: v, list: recordings.filter((r) => r.venue?.id === v.id) } }))
+    .filter((p) => p.props.list.length);
+}
+
+const { venue, list } = Astro.props;
+---
+<RecordingList heading={venue.name} kind="مكان التسجيل" list={list} />

@@ -1,0 +1,74 @@
+---
+import { url } from '../../lib/url.js';
+import Base from '../../layouts/Base.astro';
+import RecordingRow from '../../components/RecordingRow.astro';
+import PersonLink from '../../components/PersonLink.astro';
+import { recordings } from '../../lib/archive.js';
+import { duration } from '../../lib/arabic.js';
+
+export function getStaticPaths() {
+  return recordings.map((r) => ({ params: { id: String(r.id) }, props: { r } }));
+}
+
+const { r } = Astro.props;
+const length = duration(r.duration);
+const others = r.song.recordings;
+---
+<Base title={`${r.song.title} — ${r.when}`} nav="songs">
+    <section data-queue>
+        <div class="page-head">
+            <div>
+                <p class="kind">{r.typeLabel}</p>
+                <h1><a href={url(`/songs/${r.song.slug}/`)} style="text-decoration:none">{r.song.title}</a></h1>
+                <p class="meta-line" style="margin:.4rem 0 0">{r.part ? `${r.part}، ` : ''}{r.when}{r.venue ? `، ${r.venue.name}` : ''}</p>
+            </div>
+            {r.coverUrl && (
+                <figure style="margin:0">
+                    <img class="cover" src={r.coverUrl} alt="" width="152" height="152">
+                    {r.coverCredit && <figcaption class="credit">{r.coverCredit}</figcaption>}
+                </figure>
+            )}
+        </div>
+
+        <div class="actions">
+            <button class="btn" type="button" data-play data-track-id={r.id}><svg aria-hidden="true"><use href="#i-play"/></svg>استمع إلى هذا التسجيل</button>
+            {length && <span class="meta-line" dir="ltr">{length}</span>}
+            {r.song.lyrics && <a class="meta-line" href={url(`/songs/${r.song.slug}/#lyrics`)}>الكلمات</a>}
+        </div>
+
+        <dl class="facts">
+            <dt>التاريخ</dt><dd>{r.when}</dd>
+            {r.venue && <><dt>المكان</dt><dd><a href={url(`/venues/${r.venue.slug}/`)}>{r.venue.name}</a></dd></>}
+            {r.collection && <><dt>المجموعة</dt><dd><a href={url(`/collections/${r.collection.slug}/`)}>{r.collection.name}</a></dd></>}
+            {r.part && <><dt>الجزء</dt><dd>{r.part}</dd></>}
+            {r.song.lyricist && <><dt>كلمات</dt><dd><PersonLink person={r.song.lyricist} /></dd></>}
+            {r.song.composer && <><dt>ألحان</dt><dd><PersonLink person={r.song.composer} /></dd></>}
+            {r.size && <><dt>حجم الملف</dt><dd>{(r.size / 1048576).toFixed(1)} م.ب</dd></>}
+        </dl>
+
+        {r.notes.length > 0 && (
+            <ul class="notes">
+                {r.notes.map((note) => <li>{note}</li>)}
+            </ul>
+        )}
+
+        <div class="sources">
+            {r.sourceUrl && <a href={r.sourceUrl} rel="noopener" target="_blank">المنشور الأصلي في المدوّنة</a>}
+            {r.archiveItem && <a href={`https://archive.org/details/${r.archiveItem}`} rel="noopener" target="_blank">الملف على archive.org</a>}
+        </div>
+
+        {others.length > 1 ? (
+            <>
+                <h2 class="section">كل تسجيلات «{r.song.title}»</h2>
+                <ul class="recs">
+                    {others.map((o) => <RecordingRow recording={o} />)}
+                </ul>
+            </>
+        ) : (
+            /* Keep this page's own track in the queue even when it is the only one. */
+            <ul class="recs" hidden>
+                <RecordingRow recording={r} />
+            </ul>
+        )}
+    </section>
+</Base>

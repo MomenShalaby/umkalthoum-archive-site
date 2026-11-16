@@ -1,0 +1,18 @@
+{
+  "name": "umkalthoum-archive-static",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check-links": "node scripts/check-audio.mjs",
+    "check-site": "node scripts/check-site.mjs",
+    "publish-site": "node scripts/publish-site.mjs"
+  },
+  "dependencies": {
+    "@hotwired/turbo": "^8.0.23",
+    "alpinejs": "^3.17.5",
+    "astro": "^7.4.12"
+  }
+}

@@ -1,0 +1,13 @@
+---
+import RecordingList from '../../components/RecordingList.astro';
+import { collections, recordings } from '../../lib/archive.js';
+
+export function getStaticPaths() {
+  return collections
+    .map((c) => ({ params: { slug: c.slug }, props: { collection: c, list: recordings.filter((r) => r.collection?.id === c.id) } }))
+    .filter((p) => p.props.list.length);
+}
+
+const { collection, list } = Astro.props;
+---
+<RecordingList heading={collection.name} kind="مجموعة" list={list} />

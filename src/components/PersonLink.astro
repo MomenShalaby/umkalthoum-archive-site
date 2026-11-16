@@ -1,0 +1,5 @@
+---
+import { url } from '../lib/url.js';
+const { person } = Astro.props;
+---
+{person.slug ? <a href={url(`/people/${person.slug}/`)}>{person.name}</a> : person.name}

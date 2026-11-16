@@ -1,0 +1,108 @@
+---
+import { url } from '../lib/url.js';
+import Base from '../layouts/Base.astro';
+import SongRow from '../components/SongRow.astro';
+import { SITE_NAME, songsByCount, recordings, collections, venues, peopleFor, totals, span, yearsOf } from '../lib/archive.js';
+import { recordings as recordingsLabel, songs as songsLabel, decade as decadeLabel } from '../lib/arabic.js';
+
+const [first, last] = span;
+const yearList = Array.from({ length: last - first + 1 }, (_, i) => first + i);
+const perYear = new Map();
+for (const r of recordings) if (r.year) perYear.set(r.year, (perYear.get(r.year) ?? 0) + 1);
+const max = Math.max(1, ...perYear.values());
+const slot = 100 / yearList.length;
+const decades = Array.from({ length: Math.floor(last / 10) - Math.floor(first / 10) + 1 }, (_, i) => (Math.floor(first / 10) + i) * 10);
+const composers = peopleFor('composer').filter((x) => x.person.slug);
+const lyricists = peopleFor('lyricist').filter((x) => x.person.slug);
+const lyricsCount = songsByCount.filter((s) => s.lyrics).length;
+const countOf = (col, key) => recordings.filter((r) => r[col]?.id === key).length;
+const collectionList = collections.map((c) => ({ ...c, n: countOf('collection', c.id) })).filter((c) => c.n).sort((a, b) => b.n - a.n);
+const venueList = venues.map((v) => ({ ...v, n: countOf('venue', v.id) })).filter((v) => v.n).sort((a, b) => b.n - a.n);
+---
+<Base nav="songs">
+    <div id="home">
+        <section class="hero">
+            <h1>{SITE_NAME}</h1>
+            <p class="lede">
+                {recordingsLabel(totals.recordings)} لـ{totals.songs} أغنية،
+                نحو {totals.hours} ساعة استماع، بين عامي {first} و{last}.
+            </p>
+        </section>
+
+        <section class="years" aria-label="عدد التسجيلات في كل عام">
+            <div class="years-bars">
+                {yearList.map((y) => perYear.get(y)
+                    ? <a class="year" data-year={y} style={`--h: ${Math.round((perYear.get(y) / max) * 100)}%`} href={url(`/?year=${y}`)}
+                         aria-label={`${y}: ${recordingsLabel(perYear.get(y))}`} title={`${y}: ${recordingsLabel(perYear.get(y))}`}></a>
+                    : <span class="year is-empty" aria-hidden="true"></span>)}
+            </div>
+            <div class="years-axis" aria-hidden="true">
+                {yearList.filter((y) => y % 10 === 0).map((y) => <span style={`left: ${(y - first + 0.5) * slot}%`}>{y}</span>)}
+            </div>
+        </section>
+
+        <div class="years-note" dir="rtl">
+            <span data-note-all>اختر عامًا من الرسم لتصفية الأغاني.</span>
+            <span data-note-year hidden>أغانٍ سُجّلت عام <span data-year-label></span></span>
+            <a href={url('/')} data-clear-year hidden>عرض كل الأعوام</a>
+        </div>
+
+        <form class="filters" action={url('/')} method="get" aria-label="تصفية الأغاني">
+            <label>
+                <span>الملحّن</span>
+                <select name="composer">
+                    <option value="">كل الملحّنين</option>
+                    {composers.map(({ person, songs }) => <option value={person.slug}>{person.name} ({songs})</option>)}
+                </select>
+            </label>
+            <label>
+                <span>الشاعر</span>
+                <select name="lyricist">
+                    <option value="">كل الشعراء</option>
+                    {lyricists.map(({ person, songs }) => <option value={person.slug}>{person.name} ({songs})</option>)}
+                </select>
+            </label>
+            <label>
+                <span>العقد</span>
+                <select name="decade">
+                    <option value="">كل العقود</option>
+                    {decades.map((d) => <option value={d}>{decadeLabel(d)}</option>)}
+                </select>
+            </label>
+            {lyricsCount > 0 && (
+                <label class="check">
+                    <input type="checkbox" name="lyrics" value="1">
+                    <span>بالكلمات فقط ({lyricsCount})</span>
+                </label>
+            )}
+        </form>
+
+        <div class="list-head">
+            <span class="meta-line">
+                <span data-count>{songsLabel(songsByCount.length)}</span>
+                <a href={url('/')} data-clear hidden>· إلغاء التصفية</a>
+            </span>
+            <nav class="sorting" aria-label="ترتيب الأغاني">
+                <a href={url('/')} data-sort="count" aria-current="true">الأكثر تسجيلًا</a>
+                <a href={url('/?sort=title')} data-sort="title">حسب الاسم</a>
+                <a href={url('/?sort=year')} data-sort="year">الأقدم أولًا</a>
+            </nav>
+        </div>
+
+        <p class="empty" data-empty hidden><strong>لا أغاني تطابق هذه الاختيارات.</strong> جرّب عقدًا آخر أو <a href={url('/')} data-clear>اعرض كل الأغاني</a>.</p>
+
+        <ol class="songs">
+            {songsByCount.map((song) => <SongRow song={song} span={span} data />)}
+        </ol>
+
+        <h2 class="section">حسب المجموعة</h2>
+        <ul class="facts tiles">
+            {collectionList.map((c) => <li><a href={url(`/collections/${c.slug}/`)}>{c.name}</a> <span class="meta-line">{c.n}</span></li>)}
+        </ul>
+
+        <h2 class="section">حسب المكان</h2>
+        <ul class="facts tiles">
+            {venueList.map((v) => <li><a href={url(`/venues/${v.slug}/`)}>{v.name}</a> <span class="meta-line">{v.n}</span></li>)}
+        </ul>
+    </div>
+</Base>

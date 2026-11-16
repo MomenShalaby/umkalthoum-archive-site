@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import RecordingRow from './RecordingRow.astro';
+import { recordings as recordingsLabel } from '../lib/arabic.js';
+
+// A page that lists recordings: a venue or a collection.
+const { heading, kind, list } = Astro.props;
+---
+<Base title={heading} nav="songs">
+    <section data-queue>
+        <p class="kind">{kind}</p>
+        <h1 style="font-size:clamp(2.1rem,6vw,3.5rem);color:var(--teal)">{heading}</h1>
+
+        <div class="actions">
+            <button class="btn" type="button" data-play-all><svg aria-hidden="true"><use href="#i-play"/></svg>تشغيل الكل</button>
+            <span class="meta-line">{recordingsLabel(list.length)}</span>
+        </div>
+
+        <ul class="recs">
+            {list.map((r) => <RecordingRow recording={r} showSong />)}
+        </ul>
+    </section>
+</Base>

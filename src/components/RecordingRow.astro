@@ -1,0 +1,24 @@
+---
+import { url } from '../lib/url.js';
+import { duration } from '../lib/arabic.js';
+import { toTrack } from '../lib/archive.js';
+
+const { recording: r, showSong = false } = Astro.props;
+const length = duration(r.duration);
+---
+<li class="rec" data-track={JSON.stringify(toTrack(r))}>
+    <button class="round" type="button" data-play aria-label={`تشغيل ${r.song.title} — ${r.when}`}>
+        <svg class="i-play" aria-hidden="true"><use href="#i-play"/></svg>
+        <svg class="i-pause" aria-hidden="true"><use href="#i-pause"/></svg>
+    </button>
+    <a class="rec-main" href={url(`/recordings/${r.id}/`)}>
+        <span class="rec-title">{showSong ? r.song.title : r.when}</span>
+        <span class="rec-sub">
+            {showSong && <span>{r.when}</span>}
+            {r.part && <span>{r.part}</span>}
+            {r.venue && <span>{r.venue.name}</span>}
+            <span>{r.typeLabel}</span>
+        </span>
+    </a>
+    <span class="rec-len">{length}</span>
+</li>

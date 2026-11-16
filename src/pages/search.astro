@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="بحث">
+    <!-- Filled in the browser from /search-index.json; see src/scripts/search.js. -->
+    <section class="results" id="search-results">
+        <h1 style="font-size:clamp(2rem,5vw,3rem);color:var(--teal)">بحث</h1>
+        <noscript><p class="empty">البحث يحتاج إلى تفعيل JavaScript.</p></noscript>
+    </section>
+</Base>

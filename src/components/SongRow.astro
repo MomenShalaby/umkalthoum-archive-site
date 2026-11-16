@@ -1,0 +1,37 @@
+---
+import { url } from '../lib/url.js';
+import { yearsOf } from '../lib/archive.js';
+
+// One song in a list. With `span`, a strip marks the years it was recorded on the shared time axis.
+// `except` hides a credit that would only repeat the page's own person; `data` adds the attributes
+// the home page's filters read.
+const { song, span = null, except = null, data = false } = Astro.props;
+const lyricist = song.lyricistId !== except ? song.lyricist : null;
+const composer = song.composerId !== except ? song.composer : null;
+const years = yearsOf(song);
+const xOf = (y) => (span[1] === span[0] ? 50 : ((y - span[0]) / (span[1] - span[0])) * 100);
+const credits = [lyricist ? `كلمات ${lyricist.name}` : null, composer ? `ألحان ${composer.name}` : null].filter(Boolean).join('، ');
+const attrs = data ? {
+  'data-song': song.slug,
+  'data-title': song.search,
+  'data-composer': song.composer?.slug ?? '',
+  'data-lyricist': song.lyricist?.slug ?? '',
+  'data-years': years.join(','),
+  'data-lyrics': song.lyrics ? '1' : '',
+  'data-count': song.recordingsCount,
+} : {};
+---
+<li {...attrs}>
+    <a class:list={['song-row', { 'is-plain': !span }]} href={url(`/songs/${song.slug}/`)}>
+        <span>
+            <span class="song-title">{song.title}</span>
+            {credits && <span class="song-by">{credits}</span>}
+        </span>
+        {span && (
+            <span class="strip" aria-hidden="true">
+                {[...new Set(years)].map((y) => <i style={`--x: ${Math.round(xOf(y) * 100) / 100}%`}></i>)}
+            </span>
+        )}
+        <span class="song-count" title="عدد التسجيلات">{song.recordingsCount}</span>
+    </a>
+</li>

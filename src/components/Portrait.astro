@@ -1,0 +1,6 @@
+---
+const { person, size = 'md' } = Astro.props;
+---
+{person.photoUrl
+  ? <img class={`portrait portrait-${size}`} src={person.photoUrl} alt="" loading="lazy">
+  : <span class={`portrait portrait-${size} is-initial`} aria-hidden="true">{person.initial}</span>}

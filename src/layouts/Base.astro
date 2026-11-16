@@ -1,0 +1,98 @@
+---
+import { url } from '../lib/url.js';
+import '../styles/app.css';
+import { SITE_NAME } from '../lib/archive.js';
+
+const { title, nav = '', description = 'أرشيف تسجيلات أم كلثوم: أغانٍ وحفلات مرتّبة حسب الأغنية والملحّن والشاعر والعام والمكان، تُشغَّل مباشرة.' } = Astro.props;
+const navItems = [
+  ['/', 'الأغاني', 'songs'],
+  ['/composers/', 'الملحّنون', 'composers'],
+  ['/lyricists/', 'الشعراء', 'lyricists'],
+];
+---
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{title ? `${title} — ${SITE_NAME}` : SITE_NAME}</title>
+    <meta name="description" content={description}>
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>import '../scripts/app.js';</script>
+</head>
+<body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M6 5h4v14H6zM14 5h4v14h-4z"/></symbol>
+        <symbol id="i-prev" viewBox="0 0 24 24"><path fill="currentColor" d="M6 5h2v14H6zM20 5v14L9 12z"/></symbol>
+        <symbol id="i-next" viewBox="0 0 24 24"><path fill="currentColor" d="M16 5h2v14h-2zM4 5v14l11-7z"/></symbol>
+        <symbol id="i-back" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.2" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" font-family="sans-serif">10</text></symbol>
+        <symbol id="i-fwd" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5V2l5 4-5 4V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="12" y="16.2" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" font-family="sans-serif">10</text></symbol>
+    </svg>
+
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href={url('/')}>{SITE_NAME}</a>
+            <nav class="site-nav" aria-label="الأقسام">
+                {navItems.map(([href, label, key]) => <a href={url(href)} aria-current={nav === key ? 'page' : undefined}>{label}</a>)}
+            </nav>
+            <form class="search" action={url('/search/')} method="get" role="search">
+                <input type="search" name="q" placeholder="ابحث عن أغنية أو مكان أو ملحّن" aria-label="بحث" autocomplete="off">
+            </form>
+        </div>
+    </header>
+
+    <main>
+        <div class="wrap">
+            <slot />
+        </div>
+    </main>
+
+    <!-- Kept across page visits by Turbo so playback never stops while browsing. -->
+    <div id="player" class="player" data-turbo-permanent x-data hidden :hidden="!$store.player.current" role="region" aria-label="مشغّل الصوت">
+        <div class="player-in">
+            <div class="p-track">
+                <template x-if="$store.player.current?.cover">
+                    <img class="p-cover" :src="$store.player.current.cover" alt="">
+                </template>
+                <div class="p-text">
+                    <a class="p-title" :href="$store.player.current?.href" x-text="$store.player.current?.title"></a>
+                    <span class="p-meta" :class="$store.player.failed && 'p-error'" x-text="$store.player.failed ? 'تعذّر تشغيل هذا الملف' : $store.player.current?.meta"></span>
+                </div>
+            </div>
+
+            <div class="p-mid">
+                <div class="p-controls">
+                    <button class="p-btn" type="button" @click="$store.player.previous()" aria-label="السابق"><svg><use href="#i-prev"/></svg></button>
+                    <button class="p-btn" type="button" @click="$store.player.skip(-10)" aria-label="رجوع ١٠ ثوانٍ"><svg><use href="#i-back"/></svg></button>
+                    <button class="p-btn p-main" type="button" @click="$store.player.toggle()" :aria-label="$store.player.playing ? 'إيقاف مؤقت' : 'تشغيل'">
+                        <svg x-show="!$store.player.playing"><use href="#i-play"/></svg>
+                        <svg x-show="$store.player.playing"><use href="#i-pause"/></svg>
+                    </button>
+                    <button class="p-btn" type="button" @click="$store.player.skip(10)" aria-label="تقديم ١٠ ثوانٍ"><svg><use href="#i-fwd"/></svg></button>
+                    <button class="p-btn" type="button" @click="$store.player.next()" :disabled="!$store.player.canNext" aria-label="التالي"><svg><use href="#i-next"/></svg></button>
+                </div>
+                <div class="p-seek">
+                    <time x-text="$store.player.format($store.player.time)">0:00</time>
+                    <input type="range" min="0" max="1000" step="1" aria-label="موضع التشغيل"
+                           :value="$store.player.fraction * 1000"
+                           :style="'--f:' + ($store.player.fraction * 100) + '%'"
+                           @input="$store.player.seekFraction($event.target.value / 1000)">
+                    <time x-text="$store.player.format($store.player.duration)">0:00</time>
+                </div>
+            </div>
+
+            <div class="p-extra">
+                <button class="p-rate" type="button" @click="$store.player.cycleRate()" :aria-label="'سرعة التشغيل ' + $store.player.rate" x-text="$store.player.rate + '×'">1×</button>
+                <input class="p-vol" type="range" min="0" max="100" step="1" aria-label="مستوى الصوت"
+                       :value="$store.player.volume * 100"
+                       :style="'--f:' + ($store.player.volume * 100) + '%'"
+                       @input="$store.player.setVolume($event.target.value / 100)">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
