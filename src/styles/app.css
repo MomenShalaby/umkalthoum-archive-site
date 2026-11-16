@@ -267,9 +267,61 @@ input[type='range']::-moz-range-thumb { width: 0.9rem; height: 0.9rem; border-ra
 .player :focus-visible { outline-color: #f2f3ef; }
 
 .p-extra { direction: ltr; display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; }
-.p-rate { background: none; border: 1px solid #46524f; color: inherit; border-radius: 999px; padding: 0.1rem 0.7rem; font-size: 0.8125rem; font-variant-numeric: tabular-nums; cursor: pointer; }
-.p-rate:hover { border-color: #aab3ae; }
 .p-vol { width: 6rem; --f: 100%; }
+
+/* ---- the expanded player ("now playing") ------------------------------------- */
+.p-expand { color: #f2f3ef; }
+body.np-open { overflow: hidden; }
+.np {
+    position: fixed; inset: 0; z-index: 40; overflow-y: auto; color: #f2f3ef;
+    background: radial-gradient(120% 90% at 85% 0%, #24403d 0%, var(--ink) 58%);
+}
+.np[hidden] { display: none; }
+.np :focus-visible { outline-color: #f2f3ef; }
+.np-in { max-width: 72rem; min-height: 100%; margin-inline: auto; padding: 0.75rem var(--gutter) 2.5rem; display: flex; flex-direction: column; }
+.np-bar { display: flex; align-items: center; gap: 0.75rem; }
+.np-bar-title { color: #aab3ae; font-size: 0.9375rem; }
+.np-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 24rem) minmax(0, 1fr); gap: 3rem; align-items: start; margin-block-start: 1rem; }
+
+.np-deck { display: grid; gap: 1.25rem; position: sticky; top: 1rem; }
+.np-cover { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: top; border-radius: 6px; background: #2b3735; box-shadow: 0 18px 40px rgb(0 0 0 / 0.35); }
+.np-cover.is-blank { display: grid; place-items: center; font: 700 7rem/1 var(--display); color: var(--brass); background: #1f4a47; }
+.np-title { display: block; font-family: var(--display); font-size: 1.65rem; font-weight: 600; line-height: 1.3; text-decoration: none; }
+.np-title:hover { text-decoration: underline; }
+.np-meta { display: block; margin-block-start: 0.25rem; color: #aab3ae; font-size: 0.9375rem; }
+.np-deck .p-mid { gap: 0.6rem; }
+.np-controls { gap: 0.75rem; }
+.np-controls .p-btn { width: 3rem; height: 3rem; }
+.np-controls .p-main { width: 3.6rem; height: 3.6rem; }
+.np-vol { width: 100%; max-width: 12rem; justify-self: center; direction: ltr; }
+
+.np-side { min-width: 0; }
+.np-tabs { display: flex; gap: 1.5rem; border-block-end: 1px solid #3a4845; }
+.np-tabs button {
+    background: none; border: 0; border-block-end: 3px solid transparent; margin-block-end: -1px; padding: 0.6rem 0.1rem;
+    color: #aab3ae; font: 600 1.0625rem var(--text); cursor: pointer;
+}
+.np-tabs button:hover { color: #f2f3ef; }
+.np-tabs button[aria-selected='true'] { color: #f2f3ef; border-block-end-color: var(--brass); }
+.np-count { color: #aab3ae; font-weight: 400; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.np-panel { padding-block-start: 1.25rem; max-height: calc(100vh - 8.5rem); overflow-y: auto; scrollbar-width: thin; }
+
+.np-lyrics { white-space: pre-line; font-size: 1.35rem; line-height: 2.1; max-width: 36rem; }
+.np-note { color: #aab3ae; margin: 0; }
+.np-retry { background: none; border: 1px solid #46524f; color: inherit; border-radius: 999px; padding: 0.15rem 0.8rem; font: inherit; cursor: pointer; margin-inline-start: 0.5rem; }
+.np-retry:hover { border-color: #aab3ae; }
+.np-source { margin-block: 2rem 0.5rem; max-width: 36rem; color: #aab3ae; font-size: 0.8125rem; line-height: 1.7; }
+.np-source a { color: #f2f3ef; }
+
+.np-queue { list-style: none; margin: 0; padding: 0; }
+.np-queue button {
+    display: block; width: 100%; text-align: start; background: none; border: 0; border-block-end: 1px solid #2b3735;
+    padding: 0.7rem 0.5rem; color: inherit; font: inherit; cursor: pointer;
+}
+.np-queue button:hover { background: rgb(255 255 255 / 0.06); }
+.np-queue button.is-current { color: var(--brass); }
+.np-q-title { display: block; font-family: var(--display); font-weight: 600; }
+.np-q-meta { display: block; font-size: 0.8125rem; color: #aab3ae; }
 
 /* ---- small screens --------------------------------------------------------- */
 @media (max-width: 52rem) {
@@ -277,7 +329,13 @@ input[type='range']::-moz-range-thumb { width: 0.9rem; height: 0.9rem; border-ra
     .song-row { grid-template-columns: minmax(0, 1fr) 3rem; }
     .song-row .strip { grid-column: 1 / -1; grid-row: 2; }
     .player-in { grid-template-columns: 1fr; grid-template-rows: auto auto; gap: 0.1rem; padding-block: 0.5rem; align-content: center; }
-    .p-extra { display: none; }
+    .p-extra { position: absolute; inset-block-start: 0.45rem; inset-inline-end: 0.5rem; }
+    .p-extra .p-vol { display: none; }
+    .p-track { padding-inline-end: 2.75rem; }
+    .np-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .np-deck { position: static; max-width: 24rem; margin-inline: auto; width: 100%; }
+    .np-panel { max-height: none; }
+    .np-cover.is-blank { font-size: 5rem; }
     .p-cover { width: 2.5rem; height: 2.5rem; }
     .p-title { font-size: 1rem; }
     .page-head { flex-direction: column-reverse; }

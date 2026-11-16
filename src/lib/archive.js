@@ -10,6 +10,10 @@ const raw = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data', 'archive
 export const SITE_NAME = 'أرشيف أم كلثوم';
 
 const byId = (list) => new Map(list.map((x) => [x.id, x]));
+// song slug -> LRCLIB entry, written by scripts/find-lyrics.mjs (optional: songs without one search by title)
+const lyricsMapPath = path.join(process.cwd(), 'data', 'lyrics-map.json');
+const lyricsMap = fs.existsSync(lyricsMapPath) ? JSON.parse(fs.readFileSync(lyricsMapPath, 'utf8')) : {};
+
 const personById = byId(raw.people);
 const venueById = byId(raw.venues);
 const collectionById = byId(raw.collections);
@@ -62,6 +66,8 @@ for (const s of songs) s.recordingsCount = s.recordings.length;
 export const toTrack = (r) => ({
   id: r.id,
   title: r.song.title,
+  song: r.song.slug,
+  lyricsId: lyricsMap[r.song.slug]?.id ?? null,
   meta: [r.part, r.when, r.venue?.name].filter(Boolean).join(' — '),
   src: r.src,
   cover: r.coverUrl,

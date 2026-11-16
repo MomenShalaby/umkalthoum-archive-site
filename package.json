@@ -8,7 +8,8 @@
     "preview": "astro preview",
     "check-links": "node scripts/check-audio.mjs",
     "check-site": "node scripts/check-site.mjs",
-    "publish-site": "node scripts/publish-site.mjs"
+    "publish-site": "node scripts/publish-site.mjs",
+    "find-lyrics": "node scripts/find-lyrics.mjs"
   },
   "dependencies": {
     "@hotwired/turbo": "^8.0.23",

@@ -6,9 +6,10 @@
  * every `[data-track]` inside the nearest `[data-queue]` container, in page order.
  */
 
+import { loadLyrics } from '../lib/lyrics.js';
+
 const KEY = 'uk-player.v1';
 const SKIP = 10;
-const RATES = [1, 1.25, 1.5, 0.75];
 
 const read = () => {
     try {
@@ -36,16 +37,18 @@ export function registerPlayer(Alpine) {
         playing: false,
         time: 0,
         duration: 0,
-        rate: 1,
         volume: 1,
         failed: false,
+
+        // The expanded "now playing" view: a lyrics tab and the queue.
+        expanded: false,
+        tab: 'lyrics',
+        lyrics: { status: 'idle', text: '', label: '' }, // status: idle | loading | found | none | error
 
         init() {
             const saved = read();
             this.volume = typeof saved.volume === 'number' ? saved.volume : 1;
-            this.rate = RATES.includes(saved.rate) ? saved.rate : 1;
             audio.volume = this.volume;
-            audio.playbackRate = this.rate;
 
             if (saved.track) {
                 // Come back where the listener left off, paused.
@@ -102,8 +105,8 @@ export function registerPlayer(Alpine) {
             this.duration = this.current.duration || 0;
             this.failed = false;
             audio.src = this.current.src;
-            audio.playbackRate = this.rate;
             write({ track: this.current, time: 0 });
+            this.refreshLyrics();
             this.mediaSession();
             audio.play().catch(() => { this.playing = false; });
         },
@@ -134,15 +137,44 @@ export function registerPlayer(Alpine) {
             if (audio.currentTime > 3 || this.index <= 0) return this.seek(0);
             this.load(this.queue, this.index - 1);
         },
-        cycleRate() {
-            this.rate = RATES[(RATES.indexOf(this.rate) + 1) % RATES.length];
-            audio.playbackRate = this.rate;
-            write({ rate: this.rate });
-        },
         setVolume(v) {
             this.volume = Math.min(1, Math.max(0, v));
             audio.volume = this.volume;
             write({ volume: this.volume });
+        },
+
+        // ---- expanded view and lyrics ------------------------------------------------------
+        open() {
+            if (!this.current) return;
+            this.expanded = true;
+            document.body.classList.add('np-open');
+            this.refreshLyrics();
+        },
+        close() {
+            this.expanded = false;
+            document.body.classList.remove('np-open');
+        },
+        setTab(tab) {
+            this.tab = tab;
+            if (tab === 'lyrics') this.refreshLyrics();
+        },
+        /** Start playing another item of the current queue. */
+        jump(i) {
+            if (i === this.index) return this.toggle();
+            this.load(this.queue, i);
+        },
+        /** Fetch lyrics for the current track, only while someone could be looking at them. */
+        async refreshLyrics() {
+            const track = this.current;
+            if (!track || !this.expanded) return;
+            this.lyrics = { status: 'loading', text: '', label: '' };
+            try {
+                const found = await loadLyrics(track);
+                if (track !== this.current) return; // skipped to another track meanwhile
+                this.lyrics = found ? { status: 'found', ...found } : { status: 'none', text: '', label: '' };
+            } catch {
+                if (track === this.current) this.lyrics = { status: 'error', text: '', label: '' };
+            }
         },
 
         // ---- derived values for the template ----------------------------------------------
@@ -161,6 +193,7 @@ export function registerPlayer(Alpine) {
         // ---- keyboard ----------------------------------------------------------------------
         onKey(e) {
             if (e.ctrlKey || e.metaKey || e.altKey || !this.current) return;
+            if (e.key === 'Escape' && this.expanded) return this.close();
             if (e.target.closest('input, textarea, select, [contenteditable], button, a')) {
                 // Space on a focused button/link already means "activate" there.
                 if (!(e.key === 'ArrowLeft' || e.key === 'ArrowRight') || e.target.closest('input, textarea, select')) return;
