@@ -52,11 +52,6 @@ const others = r.song.recordings;
             </ul>
         )}
 
-        <div class="sources">
-            {r.sourceUrl && <a href={r.sourceUrl} rel="noopener" target="_blank">المنشور الأصلي في المدوّنة</a>}
-            {r.archiveItem && <a href={`https://archive.org/details/${r.archiveItem}`} rel="noopener" target="_blank">الملف على archive.org</a>}
-        </div>
-
         {others.length > 1 ? (
             <>
                 <h2 class="section">كل تسجيلات «{r.song.title}»</h2>
